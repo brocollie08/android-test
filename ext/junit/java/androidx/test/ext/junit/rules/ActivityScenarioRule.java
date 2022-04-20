@@ -70,7 +70,7 @@ public final class ActivityScenarioRule<A extends Activity> extends ExternalReso
    * @param activityClass an activity class to launch
    */
   public ActivityScenarioRule(Class<A> activityClass) {
-    scenarioSupplier = () -> ActivityScenario.launch(checkNotNull(activityClass));
+    scenarioSupplier = () -> ActivityScenario.launchActivityForResult(checkNotNull(activityClass));
   }
 
   /**
@@ -79,7 +79,9 @@ public final class ActivityScenarioRule<A extends Activity> extends ExternalReso
    *     activity.
    */
   public ActivityScenarioRule(Class<A> activityClass, @Nullable Bundle activityOptions) {
-    scenarioSupplier = () -> ActivityScenario.launch(checkNotNull(activityClass), activityOptions);
+    scenarioSupplier =
+        () ->
+            ActivityScenario.launchActivityForResult(checkNotNull(activityClass), activityOptions);
   }
 
   /**
@@ -88,7 +90,8 @@ public final class ActivityScenarioRule<A extends Activity> extends ExternalReso
    * @param startActivityIntent an intent to start an activity
    */
   public ActivityScenarioRule(Intent startActivityIntent) {
-    scenarioSupplier = () -> ActivityScenario.launch(checkNotNull(startActivityIntent));
+    scenarioSupplier =
+        () -> ActivityScenario.launchActivityForResult(checkNotNull(startActivityIntent));
   }
 
   /**
@@ -98,7 +101,9 @@ public final class ActivityScenarioRule<A extends Activity> extends ExternalReso
    */
   public ActivityScenarioRule(Intent startActivityIntent, @Nullable Bundle activityOptions) {
     scenarioSupplier =
-        () -> ActivityScenario.launch(checkNotNull(startActivityIntent), activityOptions);
+        () ->
+            ActivityScenario.launchActivityForResult(
+                checkNotNull(startActivityIntent), activityOptions);
   }
 
   @Override
