@@ -21,7 +21,6 @@ import configparser
 import json
 import logging
 import os
-import StringIO
 import subprocess
 import sys
 import tempfile
@@ -34,6 +33,7 @@ from absl import flags
 
 from google.protobuf import text_format
 from tools.android.emulator import resources
+from io import StringIO
 
 from tools.android.emulator import common
 from tools.android.emulator import emulated_device
