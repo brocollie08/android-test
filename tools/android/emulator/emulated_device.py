@@ -52,7 +52,6 @@ import portpicker
 
 
 from tools.android.emulator import resources
-from google.apputils import stopwatch
 
 from tools.android.emulator import common
 from tools.android.emulator import emulator_meta_data_pb2
@@ -522,7 +521,6 @@ class EmulatedDevice(object):
   def _StageDataFiles(self,
                       system_image_dir,
                       userdata_tarball,
-                      timer,
                       enable_guest_gl,
                       snapshot_file,
                       system_image_path=None,
@@ -566,25 +564,19 @@ class EmulatedDevice(object):
         os.symlink(init_sys, self._SystemFile())
       else:
         logging.info('Copying system image to %s', self._SystemFile())
-        timer.start('COPY_SYSTEM_IMAGE')
         self._SparseCp(self._InitSystemFile(), self._SystemFile())
-        timer.stop('COPY_SYSTEM_IMAGE')
         os.chmod(self._SystemFile(), stat.S_IRWXU)
     else:
       assert system_image_path.endswith('.img.tar.gz'), 'Not known format'
       logging.info('Extracting system image from tar.gz')
-      timer.start('EXTRACT_SYSTEM_IMAGE')
       self._ExtractTarEntry(
           init_sys, 'system.img', os.path.dirname(self._SystemFile()))
       shutil.move(os.path.join(os.path.dirname(self._SystemFile()),
                                'system.img'),
                   self._SystemFile())
-      timer.stop('EXTRACT_SYSTEM_IMAGE')
       os.chmod(self._SystemFile(), stat.S_IRWXU)
 
-    timer.start('MODIFY_SYSTEM_IMAGE')
     self._ModifySystemImage(enable_guest_gl)
-    timer.stop('MODIFY_SYSTEM_IMAGE')
 
     # Folders created are data/misc/*
     # Folders created are data/nativetest/**/* and so on.
@@ -719,11 +711,9 @@ class EmulatedDevice(object):
             self.android_platform.mksdcard,
             '%sM' % sdcard_size_mb,
             self._SdcardFile()]
-        timer.start(_SDCARD_CREATE)
         common.SpawnAndWaitWithRetry(sdcard_args)
         # 1AEF-1A1E is hard coded in AdbController.java
         self._SetUUID(self._SdcardFile(), 0x1AEF1A1E)
-        timer.stop(_SDCARD_CREATE)
 
 
     os.chmod(self._SdcardFile(), stat.S_IRWXU)
@@ -1246,8 +1236,6 @@ class EmulatedDevice(object):
         open_gl_driver=open_gl_driver,
         env=os.environ)
 
-    timer = stopwatch.StopWatch()
-    timer.start(_STAGE_DATA)
 
     images_dict = json.loads(self._metadata_pb.system_image_path)
     if modified_ramdisk_path:
@@ -1258,15 +1246,11 @@ class EmulatedDevice(object):
                          open_gl_driver == GUEST_OPEN_GL,
                          snapshot_file,
                          **images_dict)
-    timer.stop(_STAGE_DATA)
 
-    timer.start(_START_PROCESS)
     loading_from_snapshot = True if snapshot_file else False
     self._StartEmulator(timer, net_type, new_process_group, window_scale,
                         with_audio, with_boot_anim,
                         loading_from_snapshot=loading_from_snapshot)
-    timer.stop(_START_PROCESS)
-    self._AddTimerResults(timer)
 
   def _RuntimeProperties(self):
     """Return properties which could be tune at run time with flags."""
@@ -1788,7 +1772,6 @@ class EmulatedDevice(object):
                       self._metadata_pb.emulator_type)
 
     logging.info('Executing: %s', self._emulator_start_args)
-    timer.start(_SPAWN_EMULATOR)
 
     self._emulator_exec_dir = exec_dir
     self._sockets_dir = os.path.join(exec_dir, 'sockets')
@@ -1833,7 +1816,6 @@ class EmulatedDevice(object):
         new_process_group, self._emulator_start_args, self._emulator_env,
         exec_dir, services_dir)
 
-    timer.stop(_SPAWN_EMULATOR)
 
     self._PollEmulatorStatus(timer, loading_from_snapshot=loading_from_snapshot)
     if self._mini_boot:
@@ -2335,8 +2317,6 @@ class EmulatedDevice(object):
       Exception: if the emulator dies or doesn't become lively in a reasonable
       timeframe.
     """
-    if not timer:
-      timer = stopwatch.StopWatch()
 
     fully_booted = False
     system_server_running = False
@@ -3914,8 +3894,7 @@ class EmulatedDevice(object):
 class Attempter(object):
   """Tracks progress of launching the emulator."""
 
-  def __init__(self, timer, sleep_interval):
-    self._stopwatch = timer
+  def __init__(self, sleep_interval):
     self.sleep_interval = sleep_interval
     self.total_attempts = 0
     self.step_attempts = 0
@@ -3935,13 +3914,9 @@ class Attempter(object):
     self.total_attempts += 1
     self.step_attempts += 1
     logging.info(details)
-    self._stopwatch.start(check_tag)
     step_completes = step_fn()
-    self._stopwatch.stop(check_tag)
     if not step_completes:
-      self._stopwatch.start(sleep_tag)
       time.sleep(self.sleep_interval)
-      self._stopwatch.stop(sleep_tag)
     else:
       self.step_attempts = 0
     return step_completes
