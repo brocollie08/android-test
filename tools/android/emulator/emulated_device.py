@@ -1999,7 +1999,7 @@ class EmulatedDevice(object):
 
       if self.delete_temp_on_exit and self._emulator_tmp_dir:
         logging.info('Cleaning up data dirs.')
-        print 'cleanup data dirs...'
+        print ('cleanup data dirs...')
         self.CleanUp()
         logging.info('Clean up done.')
 
@@ -3244,7 +3244,7 @@ class EmulatedDevice(object):
     # the largest and instead of wrapping up ram.bin within the userdata.tar
     # file, we explicitly emit out a separate file so that we don't waste
     # cycles in untarring the huge file and using tmpfs space during the start
-    # cycle. ram.bin is symlinked to the file path that are passed as 
+    # cycle. ram.bin is symlinked to the file path that are passed as
     # inputs. So all the other files are tarred up in the userdata.tar.gz file
     # and ram.bin is explicitly copied over as a output file.
     snapshot_file_found = False
