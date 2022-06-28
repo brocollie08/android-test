@@ -17,7 +17,7 @@
 
 
 import collections
-import ConfigParser
+import configparser
 import json
 import logging
 import os
@@ -750,7 +750,7 @@ def _TryToConvertIniStyleFileToDict(ini_style_file):
       text = real_text_handle.read()
       filehandle = StringIO.StringIO('[android]\n' + text)
       try:
-        config = ConfigParser.ConfigParser()
+        config = configparser.ConfigParser()
         config.readfp(filehandle)
         return dict(config.items('android'))
       finally:
